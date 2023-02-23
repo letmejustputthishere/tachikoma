@@ -1,5 +1,7 @@
+import Result "mo:base/Result";
+
 actor {
-  public query func greet(name : Text) : async Text {
-    return "Hello, " # name # "!";
+  public func getPrice() : async Result.Result<Text, Text> {
+    return #ok("this worked");
   };
 };
