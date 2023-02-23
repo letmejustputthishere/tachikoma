@@ -11,7 +11,7 @@ actor {
     let ic : Types.IC = actor ("aaaaa-aa");
 
     // add cycles to next remote call
-    ExperimentalCycles.add(513_700_000);
+    ExperimentalCycles.add(514_600_000);
 
     // make call to management canister to use http outcall feature
     try {
@@ -20,7 +20,10 @@ actor {
         method = #get;
         max_response_bytes = ?1000 : ?Nat64;
         body = null;
-        transform = null;
+        transform = ?{
+          function = transform;
+          context = [];
+        };
         headers = [
           { name = "User-Agent"; value = "exchange_rate_canister" },
         ];
@@ -29,6 +32,15 @@ actor {
       return #ok(decodeBody(httpResponse));
     } catch (error : Error) {
       return #err("Reject message: " # Error.message(error));
+    };
+  };
+
+  public query func transform({
+    context : [Nat8];
+    response : Types.http_response;
+  }) : async Types.http_response {
+    {
+      response with headers = []; // not intersted in the headers
     };
   };
 };
