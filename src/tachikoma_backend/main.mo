@@ -2,9 +2,10 @@ import Result "mo:base/Result";
 import Types "types";
 import Error "mo:base/Error";
 import ExperimentalCycles "mo:base/ExperimentalCycles";
+import { decodeBody } "helpers";
 
 actor {
-  public func getPrice() : async Result.Result<Types.http_response, Text> {
+  public func getPrice() : async Result.Result<Types.DecodedHttpResponse, Text> {
 
     // create management canister actor reference
     let ic : Types.IC = actor ("aaaaa-aa");
@@ -25,7 +26,7 @@ actor {
         ];
       });
 
-      return #ok(httpResponse);
+      return #ok(decodeBody(httpResponse));
     } catch (error : Error) {
       return #err("Reject message: " # Error.message(error));
     };

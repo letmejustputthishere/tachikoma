@@ -2,6 +2,11 @@
 // Please use `import service "ic:canister_id"` instead to call canisters on the IC if possible.
 
 module {
+  public type DecodedHttpResponse = {
+    status : Nat;
+    body : Text; // body is Text now
+    headers : [http_header];
+  };
   public type bitcoin_address = Text;
   public type bitcoin_network = { #mainnet; #testnet };
   public type block_hash = [Nat8];
