@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "canisters": {
+    "tachikoma_backend": {
+      "type": "motoko",
+      "main": "src/tachikoma_backend/main.mo"
+    },
+    "tachikoma_frontend": {
+      "type": "assets",
+      "source": [
+        "src/tachikoma_frontend/assets"
+      ],
+      "dependencies": [
+        "tachikoma_backend"
+      ]
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "",
+      "args": ""
+    }
+  }
+}
