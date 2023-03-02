@@ -3,7 +3,7 @@
     "canisters": {
         "ledger": {
             "type": "custom",
-            "candid": "did/ledger.did",
+            "candid": "did/ledger.public.did",
             "wasm": "wasm/ledger_canister.wasm",
             "remote": {
                 "candid": "did/ledger.public.did",
@@ -14,7 +14,7 @@
         },
         "minter": {
             "type": "custom",
-            "candid": "did/minter.did",
+            "candid": "did/minter.public.did",
             "wasm": "wasm/ckbtc_minter.wasm",
             "remote": {
                 "candid": "did/minter.public.did",
@@ -25,7 +25,8 @@
         },
         "tachikoma_backend": {
             "type": "motoko",
-            "main": "src/tachikoma_backend/main.mo"
+            "main": "src/tachikoma_backend/main.mo",
+            "dependencies": ["ledger"]
         }
     },
     "defaults": {

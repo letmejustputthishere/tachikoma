@@ -1,0 +1,27 @@
+{
+    "name": "tachikoma",
+    "version": "1.0.0",
+    "description": "Tweet from an account controlled by a smart contract.",
+    "main": "index.js",
+    "scripts": {
+        "start": "npm run replica && npm run private-dids && npm run deploy && npm run mint",
+        "replica": "dfx stop && dfx start --clean --background --enable-bitcoin && dfx canister create minter && dfx canister create ledger && dfx canister create tachikoma_backend",
+        "deploy": "npm run deploy:minter && npm run deploy:ledger && npm run deploy:tachikoma_backend",
+        "public-dids": "sed -i '' 's|did/ledger\\.did|did/ledger\\.public\\.did|g; s|did/minter\\.did|did/minter\\.public\\.did|g' dfx.json",
+        "private-dids": "sed -i '' 's|did/ledger\\.public\\.did|did/ledger\\.did|g; s|did/minter\\.public\\.did|did/minter\\.did|g' dfx.json",
+        "deploy:minter": "LEDGERID=$(dfx canister id ledger) && dfx deploy minter --argument \"(record {btc_network = variant { Regtest };ledger_id = principal \\\"$LEDGERID\\\"; ecdsa_key_name = \\\"dfx_test_key\\\";retrieve_btc_min_amount = 5_000;max_time_in_queue_nanos = 420_000_000_000; mode = variant {GeneralAvailability}})\" --mode=reinstall -y",
+        "deploy:ledger": "MINTERID=$(dfx canister id minter) && PRINCIPAL=$(dfx identity get-principal) && dfx deploy ledger --argument \"(variant {Init = record {minting_account = record { owner = principal \\\"$MINTERID\\\" };transfer_fee = 0;token_symbol = \\\"ckBTC\\\";token_name = \\\"Token ckBTC\\\";metadata = vec {};initial_balances = vec {};archive_options = record {num_blocks_to_archive = 10_000;trigger_threshold = 20_000;cycles_for_archive_creation = opt 4_000_000_000_000;controller_id = principal \\\"$PRINCIPAL\\\";};}})\"  --mode=reinstall -y",
+        "deploy:tachikoma_backend": "npm run public-dids && dfx deploy tachikoma_backend --mode reinstall -y",
+        "mint": "BTCADDRESS=\"$(dfx canister call minter get_btc_address '(record {subaccount=null;})')\" && echo $BTCADDRESS && read -p \"\n\nLet the above address mint 400 blocks. Press [Enter] once done...\n\n\" && dfx canister call minter update_balance '(record {subaccount=null;})'"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/letmejustputthishere/tachikoma.git"
+    },
+    "author": "Moritz Fuller",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/letmejustputthishere/tachikoma/issues"
+    },
+    "homepage": "https://github.com/letmejustputthishere/tachikoma#readme"
+}

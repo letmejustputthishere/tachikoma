@@ -189,7 +189,7 @@ type Event = variant {
     confirmed_transaction : record { txid : blob };
 };
 
-service -> {
+service : {
     // Section "Convert BTC to ckBTC" {{{
 
     // Returns the bitcoin address to which the owner should send BTC

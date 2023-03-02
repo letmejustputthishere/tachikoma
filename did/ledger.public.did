@@ -74,7 +74,7 @@ type LedgerArg = variant {
     Upgrade: opt UpgradeArgs;
 };
 
-service -> {
+service : {
     icrc1_name : () -> (text) query;
     icrc1_symbol : () -> (text) query;
     icrc1_decimals : () -> (nat8) query;
