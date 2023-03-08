@@ -12,17 +12,6 @@
                 }
             }
         },
-        "minter": {
-            "type": "custom",
-            "candid": "did/minter.public.did",
-            "wasm": "wasm/ckbtc_minter.wasm",
-            "remote": {
-                "candid": "did/minter.public.did",
-                "id": {
-                    "ic": "ml52i-qqaaa-aaaar-qaaba-cai"
-                }
-            }
-        },
         "tachikoma_backend": {
             "type": "motoko",
             "main": "src/tachikoma_backend/main.mo",
