@@ -1,0 +1,36 @@
+type http_response = 
+ record {
+   body: vec nat8;
+   headers: vec http_header;
+   status: nat;
+ };
+type http_header = 
+ record {
+   name: text;
+   value: text;
+ };
+type Subaccount = blob;
+type Result = 
+ variant {
+   err: text;
+   ok: DecodedHttpResponse;
+ };
+type DecodedHttpResponse = 
+ record {
+   body: text;
+   headers: vec http_header;
+   status: nat;
+ };
+type Account = 
+ record {
+   owner: principal;
+   subaccount: opt Subaccount;
+ };
+service : {
+  getAccount: () -> (Account);
+  getPrice: () -> (Result);
+  transform: (record {
+                context: vec nat8;
+                response: http_response;
+              }) -> (http_response) query;
+}
