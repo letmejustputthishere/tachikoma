@@ -7,8 +7,8 @@
     "start": "npm run replica && npm run private-dids && npm run deploy && npm run mint",
     "replica": "dfx stop && rm -rf .dfx && dfx start --clean --background && dfx canister create ledger && dfx canister create tachikoma_backend",
     "deploy": "npm run deploy:ledger && npm run deploy:tachikoma_backend",
-    "public-dids": "sed -i '' 's|did/ledger\\.did|did/ledger\\.public\\.did|g' dfx.json",
-    "private-dids": "sed -i '' 's|did/ledger\\.public\\.did|did/ledger\\.did|g' dfx.json",
+    "public-dids": "perl -i -pe 's|did/ledger\\.did|did/ledger\\.public\\.did|g' dfx.json",
+    "private-dids": "perl -i -pe 's|did/ledger\\.public\\.did|did/ledger\\.did|g' dfx.json",
     "deploy:ledger": "dfx identity new icrc1_minter --storage-mode plaintext --force && PRINCIPAL=$(dfx identity get-principal --identity icrc1_minter) && dfx deploy ledger --argument \"(variant {Init = record {minting_account = record { owner = principal \\\"$PRINCIPAL\\\" };transfer_fee = 0;token_symbol = \\\"ckBTC\\\";token_name = \\\"Token ckBTC\\\";metadata = vec {};initial_balances = vec {};archive_options = record {num_blocks_to_archive = 10_000;trigger_threshold = 20_000;cycles_for_archive_creation = opt 4_000_000_000_000;controller_id = principal \\\"$PRINCIPAL\\\";};}})\"  --mode=reinstall -y",
     "deploy:tachikoma_backend": "npm run public-dids && dfx deploy tachikoma_backend",
     "mint": "read -p \"Enter a principal you want to mint tokens to. By default 1000 ICP will be minted to your current dfx identity.\n\" recipient && dfx canister call ledger icrc1_transfer \"(record {to = record {owner = principal \\\"$recipient\\\"};amount=100_000_000_000},)\" --identity icrc1_minter && dfx canister call ledger icrc1_transfer \"(record {to = record {owner = principal \\\"$(dfx identity get-principal)\\\"};amount=100_000_000_000},)\" --identity icrc1_minter"
