@@ -17,3 +17,6 @@ src/declarations/
 node_modules/
 dist/
 .env
+
+# mops
+.mops
