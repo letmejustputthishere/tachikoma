@@ -1,12 +1,49 @@
 import Result "mo:base/Result";
 import Types "types";
 import Error "mo:base/Error";
-import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Cycles "mo:base/ExperimentalCycles";
 import { decodeBody; deriveAccountFromCaller; deriveSubaccountFromPrincipal } "helpers";
 import CkBtcLedger "canister:ledger";
 import Principal "mo:base/Principal";
+import Hex "mo:encoding.mo/Hex";
+import Sha256 "mo:motoko-lib/Sha256";
+import Text "mo:base/Text";
+import Blob "mo:base/Blob";
 
 actor Tachikoma {
+  // create management canister actor reference
+  let ic : Types.IC = actor ("aaaaa-aa");
+
+  // return the ECDSA public key of the canister
+  // we keep this an update method to make sure no malicious replica tamper
+  // with the public key
+  public func public_key() : async Result.Result<Text, Text> {
+    try {
+      let { public_key } = await ic.ecdsa_public_key({
+        canister_id = null;
+        derivation_path = [];
+        key_id = { curve = #secp256k1; name = "dfx_test_key" };
+      });
+      #ok(Hex.encode(public_key));
+    } catch (err) {
+      #err(Error.message(err));
+    };
+  };
+
+  public func sign(message : Text) : async Result.Result<Text, Text> {
+    try {
+      let message_hash = Blob.toArray(Sha256.fromBlob(#sha256, Text.encodeUtf8(message)));
+      Cycles.add(25_000_000_000);
+      let { signature } = await ic.sign_with_ecdsa({
+        message_hash;
+        derivation_path = [];
+        key_id = { curve = #secp256k1; name = "dfx_test_key" };
+      });
+      #ok(Hex.encode(signature));
+    } catch (err) {
+      #err(Error.message(err));
+    };
+  };
 
   public shared ({ caller }) func getAccount() : async Types.Account {
     deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma));
@@ -15,7 +52,7 @@ actor Tachikoma {
   public shared ({ caller }) func getPrice() : async Result.Result<Types.DecodedHttpResponse, Text> {
     // check ckBTC balance for the callers dedicated account
     let balance = await CkBtcLedger.icrc1_balance_of(
-      deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma)),
+      deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma))
     );
 
     // check if the account has enough funds to pay for the service
@@ -36,7 +73,7 @@ actor Tachikoma {
             owner = Principal.fromActor(Tachikoma);
             subaccount = null;
           };
-        },
+        }
       );
 
       switch (transferResult) {
@@ -49,11 +86,8 @@ actor Tachikoma {
       return #err("Reject message: " # Error.message(error));
     };
 
-    // create management canister actor reference
-    let ic : Types.IC = actor ("aaaaa-aa");
-
     // add cycles to next remote call
-    ExperimentalCycles.add(514_600_000);
+    Cycles.add(514_600_000);
 
     // make call to management canister to use http outcall feature
     try {
@@ -76,6 +110,7 @@ actor Tachikoma {
     };
   };
 
+  // the transform method required by the http_request method
   public query func transform({
     context : [Nat8];
     response : Types.http_response;
