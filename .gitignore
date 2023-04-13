@@ -20,3 +20,6 @@ dist/
 
 # mops
 .mops
+
+# certificates
+*.pem

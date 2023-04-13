@@ -1,4 +1,7 @@
 import express, { Request, Response } from "express";
+import https from "https";
+import fs from "fs";
+import path from "path";
 import "dotenv/config";
 import TwitterApi from "twitter-api-v2";
 import { verify } from "./helpers";
@@ -13,6 +16,15 @@ const client = new TwitterApi({
     accessToken: process.env.ACCESS_TOKEN!,
     accessSecret: process.env.ACCESS_TOKEN_SECRET!,
 }).readWrite;
+
+// create options object for https server
+// that contains the private key and certificate
+const options = {
+    // read key from file
+    key: fs.readFileSync(path.join(__dirname, "../127.0.0.1-key.pem")),
+    // read certificate from file
+    cert: fs.readFileSync(path.join(__dirname, "../127.0.0.1.pem")),
+};
 
 const app = express();
 const port = 3000;
@@ -35,7 +47,6 @@ app.post(
         }
     }
 );
-
-app.listen(port, () => {
+https.createServer(options, app).listen(port, () => {
     console.log(`Server listening on port ${port}.`);
 });

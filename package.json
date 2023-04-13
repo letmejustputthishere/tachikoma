@@ -1,12 +1,15 @@
 {
-  "name": "tachikoma",
-  "version": "1.0.0",
-  "main": "index.js",
-  "repository": "git@github.com:letmejustputthishere/tachikoma.git",
-  "author": "Moritz Fuller <moritz.fuller@dfinity.org>",
-  "license": "MIT",
-  "private": true,
-  "workspaces" : [
-    "workspaces/*"
-  ]
+    "name": "tachikoma",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "git@github.com:letmejustputthishere/tachikoma.git",
+    "author": "Moritz Fuller <moritz.fuller@dfinity.org>",
+    "license": "MIT",
+    "private": true,
+    "workspaces": [
+        "workspaces/*"
+    ],
+    "scripts": {
+        "start": "yarn workspace tachikoma start && yarn workspace proxy start"
+    }
 }
