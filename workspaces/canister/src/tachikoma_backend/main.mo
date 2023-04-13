@@ -18,7 +18,7 @@ actor Tachikoma {
   // return the ECDSA public key of the canister
   // we keep this an update method to make sure no malicious replica tamper
   // with the public key
-  public func public_key() : async Result.Result<Text, Text> {
+  public func publicKey() : async Result.Result<Text, Text> {
     try {
       let { public_key } = await ic.ecdsa_public_key({
         canister_id = null;
@@ -98,10 +98,8 @@ actor Tachikoma {
     };
 
     // create a signature on the message
-    var hexSignature = "";
-    let result = await* sign(message);
-    switch (result) {
-      case (#ok(value)) { hexSignature := value };
+    let hexSignature = switch (await* sign(message)) {
+      case (#ok(value)) { value };
       case (#err(error)) { return #err error };
     };
 
@@ -114,7 +112,7 @@ actor Tachikoma {
     // make call to management canister to use http outcall feature
     try {
       let httpResponse = await ic.http_request({
-        url = "http://127.0.0.1:3000/tweet";
+        url = "https://127.0.0.1:3000/tweet";
         method = #post;
         max_response_bytes = ?500 : ?Nat64;
         body = ?Blob.toArray(Text.encodeUtf8(json));
@@ -124,6 +122,7 @@ actor Tachikoma {
         };
         headers = [
           { name = "User-Agent"; value = "exchange_rate_canister" },
+          { name = "Content-Type"; value = "application/json" },
         ];
       });
       return #ok(decodeBody(httpResponse));
