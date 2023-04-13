@@ -9,6 +9,7 @@ import Hex "mo:encoding.mo/Hex";
 import Sha256 "mo:motoko-lib/Sha256";
 import Text "mo:base/Text";
 import Blob "mo:base/Blob";
+import JSON "mo:json.mo/JSON";
 
 actor Tachikoma {
   // create management canister actor reference
@@ -26,14 +27,14 @@ actor Tachikoma {
       });
       #ok(Hex.encode(public_key));
     } catch (err) {
-      #err(Error.message(err));
+      #err("Reject message: " # Error.message(err));
     };
   };
 
-  public func sign(message : Text) : async Result.Result<Text, Text> {
+  func sign(message : Text) : async* Result.Result<Text, Text> {
     try {
       let message_hash = Blob.toArray(Sha256.fromBlob(#sha256, Text.encodeUtf8(message)));
-      Cycles.add(25_000_000_000);
+      Cycles.add(30_000_000_000);
       let { signature } = await ic.sign_with_ecdsa({
         message_hash;
         derivation_path = [];
@@ -41,7 +42,7 @@ actor Tachikoma {
       });
       #ok(Hex.encode(signature));
     } catch (err) {
-      #err(Error.message(err));
+      #err("Reject message: " # Error.message(err));
     };
   };
 
@@ -49,7 +50,16 @@ actor Tachikoma {
     deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma));
   };
 
-  public shared ({ caller }) func getPrice() : async Result.Result<Types.DecodedHttpResponse, Text> {
+  public shared ({ caller }) func sendTweet(message : Text) : async Result.Result<Types.DecodedHttpResponse, Text> {
+    // set an upper limit for the message length
+    // please note that this is merely to avoid high
+    // costs for the http outcalls, as they are increasing linearly
+    // with the message length. the validation of the tweet length happens
+    // client side in the users browser.
+    if (Text.size(message) > 500) {
+      return #err("Message is too long. Please keep it below 500 characters.");
+    };
+
     // check ckBTC balance for the callers dedicated account
     let balance = await CkBtcLedger.icrc1_balance_of(
       deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma))
@@ -76,6 +86,7 @@ actor Tachikoma {
         }
       );
 
+      // it could be that the transfer failed, so we check for that
       switch (transferResult) {
         case (#Err(transferError)) {
           return #err("Couldn't transfer funds to default account:\n" # debug_show (transferError));
@@ -86,16 +97,27 @@ actor Tachikoma {
       return #err("Reject message: " # Error.message(error));
     };
 
+    // create a signature on the message
+    var hexSignature = "";
+    let result = await* sign(message);
+    switch (result) {
+      case (#ok(value)) { hexSignature := value };
+      case (#err(error)) { return #err error };
+    };
+
+    // create JSON object with the message and the signature
+    let json : Text = JSON.show(#Object([("message", #String(message)), ("signature", #String(hexSignature))]));
+
     // add cycles to next remote call
-    Cycles.add(514_600_000);
+    Cycles.add(526_200_000);
 
     // make call to management canister to use http outcall feature
     try {
       let httpResponse = await ic.http_request({
-        url = "https://api.exchange.coinbase.com/products/ICP-USD/candles?granularity=60&start=1620743971&end=1620744031";
-        method = #get;
-        max_response_bytes = ?1000 : ?Nat64;
-        body = null;
+        url = "http://127.0.0.1:3000/tweet";
+        method = #post;
+        max_response_bytes = ?500 : ?Nat64;
+        body = ?Blob.toArray(Text.encodeUtf8(json));
         transform = ?{
           function = transform;
           context = [];
@@ -117,6 +139,7 @@ actor Tachikoma {
   }) : async Types.http_response {
     {
       response with headers = []; // not intersted in the headers
+      body = []; // not interested in the body
     };
   };
 };
