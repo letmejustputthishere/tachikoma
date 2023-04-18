@@ -11,7 +11,7 @@ import Text "mo:base/Text";
 import Blob "mo:base/Blob";
 import JSON "mo:json.mo/JSON";
 
-actor Tachikoma {
+actor class Tachikoma({ proxyUrl : Text }) = this {
   // create management canister actor reference
   let ic : Types.IC = actor ("aaaaa-aa");
 
@@ -47,7 +47,7 @@ actor Tachikoma {
   };
 
   public shared ({ caller }) func getAccount() : async Types.Account {
-    deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma));
+    deriveAccountFromCaller(caller, Principal.fromActor(this));
   };
 
   public shared ({ caller }) func sendTweet(message : Text) : async Result.Result<Types.DecodedHttpResponse, Text> {
@@ -62,7 +62,7 @@ actor Tachikoma {
 
     // check ckBTC balance for the callers dedicated account
     let balance = await CkBtcLedger.icrc1_balance_of(
-      deriveAccountFromCaller(caller, Principal.fromActor(Tachikoma))
+      deriveAccountFromCaller(caller, Principal.fromActor(this))
     );
 
     // check if the account has enough funds to pay for the service
@@ -80,7 +80,7 @@ actor Tachikoma {
           fee = null;
           memo = null;
           to = {
-            owner = Principal.fromActor(Tachikoma);
+            owner = Principal.fromActor(this);
             subaccount = null;
           };
         }
@@ -112,7 +112,7 @@ actor Tachikoma {
     // make call to management canister to use http outcall feature
     try {
       let httpResponse = await ic.http_request({
-        url = "https://127.0.0.1:3000/tweet";
+        url = proxyUrl;
         method = #post;
         max_response_bytes = ?500 : ?Nat64;
         body = ?Blob.toArray(Text.encodeUtf8(json));
