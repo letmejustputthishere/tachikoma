@@ -17,15 +17,6 @@ const client = new TwitterApi({
     accessSecret: process.env.ACCESS_TOKEN_SECRET!,
 }).readWrite;
 
-// create options object for https server
-// that contains the private key and certificate
-const options = {
-    // read key from file
-    key: fs.readFileSync(path.join(__dirname, "../127.0.0.1-key.pem")),
-    // read certificate from file
-    cert: fs.readFileSync(path.join(__dirname, "../127.0.0.1.pem")),
-};
-
 const app = express();
 const port = 3000;
 
@@ -47,6 +38,22 @@ app.post(
         }
     }
 );
-https.createServer(options, app).listen(port, () => {
-    console.log(`Server listening on port ${port}.`);
-});
+
+if (process.env.MODE === "dev") {
+    // create options object for https server
+    // that contains the private key and certificate
+    const options = {
+        // read key from file
+        key: fs.readFileSync(path.join(__dirname, "../127.0.0.1-key.pem")),
+        // read certificate from file
+        cert: fs.readFileSync(path.join(__dirname, "../127.0.0.1.pem")),
+    };
+
+    https.createServer(options, app).listen(port, () => {
+        console.log(`Server listening on port ${port}.`);
+    });
+} else {
+    app.listen(port, () => {
+        console.log(`Server listening on port ${port}.`);
+    });
+}
